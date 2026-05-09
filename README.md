@@ -8,5 +8,4 @@ This is a repository ready for the Theory of Languages and Automata project
    1. enter `git remote set-url --add origin https://gitlab.aranserver.com/SajadSK/project-nzm.git`
    2. enter `git remote get-url --all origin`
    3. You should see two URLs
-- It pushes to **both GitHub and GitLab automatically** ✅
-- hfdsfhsdahfjdksaf
+- It pushes to **both GitHub and GitLab automatically**
