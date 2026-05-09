@@ -9,3 +9,4 @@ This is a repository ready for the Theory of Languages and Automata project
    2. enter `git remote get-url --all origin`
    3. You should see two URLs
 - It pushes to **both GitHub and GitLab automatically** ✅
+- hfdsfhsdahfjdksaf
