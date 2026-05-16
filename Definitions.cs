@@ -1,65 +1,188 @@
+using System;
+
+
 namespace ProjectNZM
 {
-    public class State
+   public enum GrammerType
     {
-      public string Name {get; set;}
-      public bool IsAccepted{get; set;}
-      private Dictionary<char,State> transitions;
-      public State(string name,bool isAccepted =false)
+        Regular,RightRegular,LeftRegular,Mixed,NotRegular,unknown
+    }
+    public class DfaTransitionView
+    {
+        public string Fromstate {get; set;}
+        public char Symbol {get; set;}
+        public string Tostate{get; set;}
+    }
+    public class Dfa
+    {
+        public string StartState {get; set;}
+        public HashSet<string> Finalstates {get; set;}
+        public HashSet<string> Allstates{get; set;}
+        public List<DfaTransition> Transitions {get; set;}
+        public Dfa()
         {
-            Name=name;
-            IsAccepted=isAccepted;
-            transitions = new Dictionary<char, State>();
-        }  
-        public void Addtransition(char symbol,State target)
-        {
-            if(!transitions.ContainsKey(symbol))
-            {
-                transitions.Add(symbol,target);
-            }
-            else
-            {
-                throw new Exception($"A transition for '{symbol}' exists in the state {Name}");
-            }
+            Finalstates = new HashSet<string>();
+            Allstates = new HashSet<string>();
+            Transitions = new List<DfaTransition>();
         }
-        public State GetNextState(char symbol)
+        public List<DfaTransitionView>GetTransitionView()
         {
-            if(transitions.ContainsKey(symbol))
+            return Transitions.Select(T =>new DfaTransitionView
             {
-                return transitions[symbol];
-            
-            }
-            else
-            {
-                return null;
-            }
+                Fromstate = T.Fromstate,
+                Symbol = T.Symbol,
+                Tostate=T.Tostate
+            }).ToList();
         }
-        public Dictionary<char,State> GetTransitions()
+        public bool Accepts(string input)
         {
-            return transitions;
+           string currentState = StartState;
+           foreach (char symbol in input)
+             {
+               var transition = Transitions.FirstOrDefault(t => t.FromState == currentState && t.Symbol == symbol);
+               if (transition == null)
+                 {
+                    return false; 
+                 }
+               currentState = transition.ToState;
+             }
+            return FinalStates.Contains(currentState);
         }
     }
-    public class DFA
+    public class Grammer
     {
-        List<State> states;
-        HashSet<char> Symbol; //each iterative symbol won't be saved
-        State startstate;
-        public DFA()
+        public string Startsymbol{get; set;}
+        public Dictionary<string,List<string>> Productions {get; set;}
+        public HashSet<char> Terminals {get; set;}
+        public HashSet<string> Nonterminals {get; set;}
+        public Grammer()
         {
-            states = new List<State>();
-            Symbol = new HashSet<char>();
+            Productions = new Dictionary<string, List<string>>();
+            Terminals = new HashSet<char>();
+            Nonterminals = new HashSet<string>();
         }
-        // methods for ALi
+        public static Grammer Parse(string[] Lines)
+        {
+            var grammer = new Grammer();
+            if(Lines == null || Lines.Length==0)
+            {
+                throw new Exception("Input grammer can't be empty");
+            }
+            var Firstrule = Lines[0];
+            var ArrowIndex = Firstrule.IndexOf("->");
+            if(ArrowIndex <0 )
+            {
+                throw new FormatException($"invalid grammer rule format: {Firstrule}");
+            }
+            grammer.Startsymbol = Firstrule.Substring(0,ArrowIndex).Trim();
+            if(string.IsNullOrEmpty(grammer.Startsymbol))
+            {
+                throw new FormatException("start symbol can't be empty");
+            }
+            grammer.Nonterminals.Add(grammer.Startsymbol);
+            foreach(var line in Lines)
+            {
+                ArrowIndex = line.IndexOf("->");
+                if(ArrowIndex <0)
+                {
+                    continue;
+                }
+                string nonterminals = line.Substring(0,ArrowIndex).Trim();
+                string ProductionsPart = line.Substring(ArrowIndex+2).Trim();
+                if(string.IsNullOrEmpty(nonterminals))
+                {
+                    throw new FormatException($"Non-terminal is not in rule : {line}");
+                }
+                if(!grammer.Nonterminals.Contains(nonterminals))
+                {
+                    grammer.Nonterminals.Add(nonterminals);
+                }
+                var ProductionList = ProductionsPart.Split('|').Select(P=>P.Trim()).ToList();
+                if(!grammer.Productions.ContainsKey(nonterminals))
+                {
+                    grammer.Productions[nonterminals] = new List<string>();
+                }
+                grammer.Productions[nonterminals].AddRange(ProductionList);
+                foreach (var production in ProductionList)
+                {
+                    if(production =="ε")
+                    {
+                        continue;
+                    }
+                    foreach(char symbol in production)
+                    {
+                        if(char.IsLower(symbol))
+                        {
+                            grammer.Terminals.Add(symbol);
+                        }
+                        else if(char.IsUpper(symbol))
+                        {
+                            if(!grammer.Nonterminals.Contains(symbol.ToString()))
+                            {
+                                grammer.Nonterminals.Add(symbol.ToString());
+                            }
+                        }
+                    }
+                }
+            }
+            foreach(var nt in grammer.Nonterminals)
+            {
+               if(!grammer.Productions.ContainsKey(nt))
+                {
+                    grammer.Productions[nt] = new List<string>();
+                }
+            }
+            var symbolsInProductions = grammer.Productions.Values.SelectMany(list =>list).SelectMany(p => p.Where(c=>c !='ε'));
+            foreach(char symbol in symbolsInProductions)
+            {
+                if(char.IsLower(symbol))
+                {
+                    grammer.Terminals.Add(symbol);
+                }
+                else if(char.IsUpper(symbol))
+                {
+                    if(!grammer.Nonterminals.Contains(symbol.ToString()))
+                    {
+                        grammer.Nonterminals.Add(symbol.ToString());
+                    }
+                }
+            }
+             if(!grammer.Nonterminals.Contains(grammer.Startsymbol))
+                {
+                    grammer.Nonterminals.Add(grammer.Startsymbol);
+                }
+            foreach(var terminal in grammer.Terminals.ToList())
+            {
+               if(grammer.Nonterminals.Contains(terminal.ToString()))
+                {
+                    grammer.Nonterminals.Remove(terminal.ToString());
+                } 
+            }
+            return grammer;
+        }
+        public bool Isterminal(char symbol)
+        {
+            return Terminals.Contains(symbol);
+        }
+        public bool Isnonterminal(string symbol)
+        {
+            return Nonterminals.Contains(symbol);
+        }
     }
-    public class DFA_builder
+    public class GrammarConverter
     {
-        DFA dfa;
-        Dictionary<string,State>state;
-        public DFA_builder()
+        readonly Grammer _grammer;
+        public GrammarConverter(Grammer grammer)
         {
-            dfa=new DFA();
-            state =new Dictionary<string, State>();
+            _grammer = grammer ?? throw new Exception(nameof(grammer));
         }
-        //methods for Sajad
+        public GrammerType DetermineType()
+        {
+            //will be completed by Ali
+        }
+        public Dfa ConverttoDfa()
+        {
+            //will be completed by sajad
+        }
     }
 }
