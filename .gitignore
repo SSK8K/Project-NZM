@@ -1,2 +1,5 @@
 # Exclude macOS system files
 .DS_Store
+
+# Exclude local folder
+/Local
