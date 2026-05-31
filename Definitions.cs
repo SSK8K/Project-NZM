@@ -178,88 +178,90 @@ namespace ProjectNZM
         }
         public GrammerType DetermineType()
         {
-           // Guard clauses
-          if (_grammer == null)
-            throw new Exception("Grammar object is null");
+            // Guard clauses
+            if (_grammer == null)
+                throw new Exception("Grammar object is null");
 
-         if (_grammer.Productions == null || _grammer.Productions.Count == 0)
-          throw new Exception("Grammar has no productions to analyze");
+            if (_grammer.Productions == null || _grammer.Productions.Count == 0)
+                throw new Exception("Grammar has no productions to analyze");
 
-          if (_grammer.Nonterminals == null || _grammer.Nonterminals.Count == 0)
-        throw new Exception("Grammar has no non-terminals defined");
+            if (_grammer.Nonterminals == null || _grammer.Nonterminals.Count == 0)
+                throw new Exception("Grammar has no non-terminals defined");
 
-         bool hasRightRegular = false;
-          bool hasLeftRegular = false;
+            bool hasRightRegular = false;
+            bool hasLeftRegular = false;
 
-           for (int i = 0; i < _grammer.Nonterminals.Count; i++)
-          {
-          string nonTerminal = _grammer.Nonterminals.ElementAt(i);
+            for (int i = 0; i < _grammer.Nonterminals.Count; i++)
+            {
+                string nonTerminal = _grammer.Nonterminals.ElementAt(i);
 
-          if (!_grammer.Productions.ContainsKey(nonTerminal))
-            throw new Exception($"Non-terminal '{nonTerminal}' has no production rules defined");
+                if (!_grammer.Productions.ContainsKey(nonTerminal))
+                    continue;
 
-         List<string> productions = _grammer.Productions[nonTerminal];
+                List<string> productions = _grammer.Productions[nonTerminal];
 
-         if (productions == null || productions.Count == 0)
-            throw new Exception($"Non-terminal '{nonTerminal}' has an empty production list");
+                if (productions == null || productions.Count == 0)
+                    continue;
 
-           for (int j = 0; j < productions.Count; j++)
-          {
-            string production = productions[j];
+                for (int j = 0; j < productions.Count; j++)
+                {
+                    string production = productions[j];
 
-            if (string.IsNullOrEmpty(production))
-                throw new Exception($"Non-terminal '{nonTerminal}' has an empty or null production");
+                    if (string.IsNullOrEmpty(production))
+                        throw new Exception($"Non-terminal '{nonTerminal}' has an empty or null production");
 
-            bool isRight = CheckRightRegular(production);
-            bool isLeft  = CheckLeftRegular(production);
+                    if (production == "ε" || production == "λ")
+                      {
+                         hasRightRegular = true;
+                         continue;
+                      }
+                    bool isRight = CheckRightRegular(production);
+                    bool isLeft = CheckLeftRegular(production);
 
-            // Neither right nor left regular → grammar is not regular
-            if (!isRight && !isLeft)
-                return GrammarType.NotRegular;
+                    // Neither right nor left regular → grammar is not regular
+                    if (!isRight && !isLeft)
+                        return GrammerType.NotRegular;
 
-            if (isRight) hasRightRegular = true;
-            if (isLeft)  hasLeftRegular  = true;
-        }
-    }
+                    if (isRight) hasRightRegular = true;
+                    if (isLeft) hasLeftRegular = true;
+                }
+            }
 
-         // Final classification based on observed production types
-        if (hasRightRegular && hasLeftRegular) return GrammarType.Mixed;
-         if (hasRightRegular)                   return GrammarType.RightRegular;
-         if (hasLeftRegular)                    return GrammarType.LeftRegular;
+            // Final classification based on observed production types
+            if (hasRightRegular && hasLeftRegular) return GrammerType.Mixed;
+            if (hasRightRegular) return GrammerType.RightRegular;
+            if (hasLeftRegular) return GrammerType.LeftRegular;
 
-         throw new Exception("Unable to determine grammar type - no valid productions found");
+            throw new Exception("Unable to determine grammar type - no valid productions found");
         }
         private bool CheckRightRegular(string production)
-         {
-        if (string.IsNullOrEmpty(production)) return false;
+        {
+            if (string.IsNullOrEmpty(production)) return false;
 
-        // A -> a
-         if (production.Length == 1)
-        return _grammer.Isterminal(production[0]);
+            // A -> a
+            if (production.Length == 1)
+                return _grammer.Isterminal(production[0]);
 
-         // A -> aB
-         if (production.Length == 2)
-        return _grammer.Isterminal(production[0]) &&
-               _grammer.Isnonterminal(production[1].ToString());
+            // A -> aB
+            if (production.Length == 2)
+                return _grammer.Isterminal(production[0]) &&
+                       _grammer.Isnonterminal(production[1].ToString());
 
-          return false;
-         }
+            return false;
+        }
 
-      private bool CheckLeftRegular(string production)
-         {
-         if (string.IsNullOrEmpty(production)) return false;
+        private bool CheckLeftRegular(string production)
+        {
+            if (string.IsNullOrEmpty(production)) return false;
 
-         // A -> a
-         if (production.Length == 1)
-        return _grammer.Isterminal(production[0]);
 
-         // A -> Ba
-         if (production.Length == 2)
-        return _grammer.Isnonterminal(production[0].ToString()) &&
-               _grammer.Isterminal(production[1]);
+            // A -> Ba only
+            if (production.Length == 2)
+                return _grammer.Isnonterminal(production[0].ToString()) &&
+                       _grammer.Isterminal(production[1]);
 
-         return false;
-         }
+            return false;
+        }
         public Dfa ConverttoDfa()
         {
             //will be completed by sajad
