@@ -3,107 +3,107 @@ using System;
 
 namespace ProjectNZM
 {
-   public enum GrammerType
+   public enum GrammarType
     {
-        Regular,RightRegular,LeftRegular,Mixed,NotRegular,unknown
+        Regular,RightRegular,LeftRegular,Mixed,Irregular,unknown
     }
-    public class DfaTransitionView
+    public class DFATransition
     {
-        public string Fromstate {get; set;}
-        public char Symbol {get; set;}
-        public string Tostate{get; set;}
+        public string fromState {get; set;}
+        public char symbol {get; set;}
+        public string toState{get; set;}
     }
-    public class Dfa
+    public class DFA
     {
-        public string StartState {get; set;}
-        public HashSet<string> Finalstates {get; set;}
-        public HashSet<string> Allstates{get; set;}
-        public List<DfaTransition> Transitions {get; set;}
-        public Dfa()
+        public string startState {get; set;}
+        public HashSet<string> finalState {get; set;}
+        public HashSet<string> allStates {get; set;}
+        public List<DFATransition> transitions {get; set;}
+        public DFA()
         {
-            Finalstates = new HashSet<string>();
-            Allstates = new HashSet<string>();
-            Transitions = new List<DfaTransition>();
+            finalState = new HashSet<string>();
+            allStates = new HashSet<string>();
+            transitions = new List<DFATransition>();
         }
-        public List<DfaTransitionView>GetTransitionView()
+        public List<DFATransition>GetTransitionView()
         {
-            return Transitions.Select(T =>new DfaTransitionView
+            return transitions.Select(terminals =>new DFATransition
             {
-                Fromstate = T.Fromstate,
-                Symbol = T.Symbol,
-                Tostate=T.Tostate
+                fromState = terminals.fromState,
+                symbol = terminals.symbol,
+                toState=terminals.toState
             }).ToList();
         }
         public bool Accepts(string input)
         {
-           string currentState = StartState;
+           string currentState = startState;
            foreach (char symbol in input)
              {
-               var transition = Transitions.FirstOrDefault(t => t.FromState == currentState && t.Symbol == symbol);
+               var transition = Transitions.FirstOrDefault(t => t.FromState == currentState && t.symbol == symbol);
                if (transition == null)
                  {
                     return false; 
                  }
                currentState = transition.ToState;
              }
-            return FinalStates.Contains(currentState);
+            return finalState.Contains(currentState);
         }
     }
-    public class Grammer
+    public class Grammar
     {
-        public string Startsymbol{get; set;}
-        public Dictionary<string,List<string>> Productions {get; set;}
-        public HashSet<char> Terminals {get; set;}
-        public HashSet<string> Nonterminals {get; set;}
-        public Grammer()
+        public string startSymbol{get; set;}
+        public Dictionary<string,List<string>> productions {get; set;}
+        public HashSet<char> terminals {get; set;}
+        public HashSet<string> variables {get; set;}
+        public Grammar()
         {
-            Productions = new Dictionary<string, List<string>>();
-            Terminals = new HashSet<char>();
-            Nonterminals = new HashSet<string>();
+            productions = new Dictionary<string, List<string>>();
+            terminals = new HashSet<char>();
+            variables = new HashSet<string>();
         }
-        public static Grammer Parse(string[] Lines)
+        public static Grammar Parse(string[] Lines)
         {
-            var grammer = new Grammer();
+            var grammar = new Grammar();
             if(Lines == null || Lines.Length==0)
             {
-                throw new Exception("Input grammer can't be empty");
+                throw new Exception("Input grammar can't be empty");
             }
-            var Firstrule = Lines[0];
-            var ArrowIndex = Firstrule.IndexOf("->");
-            if(ArrowIndex <0 )
+            var firstRule = Lines[0];
+            var arrowIndex = firstRule.IndexOf("->");
+            if(arrowIndex <0 )
             {
-                throw new FormatException($"invalid grammer rule format: {Firstrule}");
+                throw new FormatException($"invalid grammar rule format: {firstRule}");
             }
-            grammer.Startsymbol = Firstrule.Substring(0,ArrowIndex).Trim();
-            if(string.IsNullOrEmpty(grammer.Startsymbol))
+            grammar.startSymbol = firstRule.Substring(0,arrowIndex).Trim();
+            if(string.IsNullOrEmpty(grammar.startSymbol))
             {
                 throw new FormatException("start symbol can't be empty");
             }
-            grammer.Nonterminals.Add(grammer.Startsymbol);
+            grammar.variables.Add(grammar.startSymbol);
             foreach(var line in Lines)
             {
-                ArrowIndex = line.IndexOf("->");
-                if(ArrowIndex <0)
+                arrowIndex = line.IndexOf("->");
+                if(arrowIndex <0)
                 {
                     continue;
                 }
-                string nonterminals = line.Substring(0,ArrowIndex).Trim();
-                string ProductionsPart = line.Substring(ArrowIndex+2).Trim();
-                if(string.IsNullOrEmpty(nonterminals))
+                var nonTerminals = line.Substring(0,arrowIndex).Trim();
+                var productionsPart = line.Substring(arrowIndex+2).Trim();
+                if(string.IsNullOrEmpty(nonTerminals))
                 {
                     throw new FormatException($"Non-terminal is not in rule : {line}");
                 }
-                if(!grammer.Nonterminals.Contains(nonterminals))
+                if(!grammar.variables.Contains(nonTerminals))
                 {
-                    grammer.Nonterminals.Add(nonterminals);
+                    grammar.variables.Add(nonTerminals);
                 }
-                var ProductionList = ProductionsPart.Split('|').Select(P=>P.Trim()).ToList();
-                if(!grammer.Productions.ContainsKey(nonterminals))
+                var productionList = productionsPart.Split('|').Select(productions=>productions.Trim()).ToList();
+                if(!grammar.productions.ContainsKey(nonTerminals))
                 {
-                    grammer.Productions[nonterminals] = new List<string>();
+                    grammar.productions[nonTerminals] = new List<string>();
                 }
-                grammer.Productions[nonterminals].AddRange(ProductionList);
-                foreach (var production in ProductionList)
+                grammar.productions[nonTerminals].AddRange(productionList);
+                foreach (var production in productionList)
                 {
                     if(production =="ε")
                     {
@@ -113,92 +113,92 @@ namespace ProjectNZM
                     {
                         if(char.IsLower(symbol))
                         {
-                            grammer.Terminals.Add(symbol);
+                            grammar.terminals.Add(symbol);
                         }
                         else if(char.IsUpper(symbol))
                         {
-                            if(!grammer.Nonterminals.Contains(symbol.ToString()))
+                            if(!grammar.variables.Contains(symbol.ToString()))
                             {
-                                grammer.Nonterminals.Add(symbol.ToString());
+                                grammar.variables.Add(symbol.ToString());
                             }
                         }
                     }
                 }
             }
-            foreach(var nt in grammer.Nonterminals)
+            foreach(var nt in grammar.variables)
             {
-               if(!grammer.Productions.ContainsKey(nt))
+               if(!grammar.productions.ContainsKey(nt))
                 {
-                    grammer.Productions[nt] = new List<string>();
+                    grammar.productions[nt] = new List<string>();
                 }
             }
-            var symbolsInProductions = grammer.Productions.Values.SelectMany(list =>list).SelectMany(p => p.Where(c=>c !='ε'));
+            var symbolsInProductions = grammar.productions.Values.SelectMany(list =>list).SelectMany(p => p.Where(c=>c !='ε'));
             foreach(char symbol in symbolsInProductions)
             {
                 if(char.IsLower(symbol))
                 {
-                    grammer.Terminals.Add(symbol);
+                    grammar.terminals.Add(symbol);
                 }
                 else if(char.IsUpper(symbol))
                 {
-                    if(!grammer.Nonterminals.Contains(symbol.ToString()))
+                    if(!grammar.variables.Contains(symbol.ToString()))
                     {
-                        grammer.Nonterminals.Add(symbol.ToString());
+                        grammar.variables.Add(symbol.ToString());
                     }
                 }
             }
-             if(!grammer.Nonterminals.Contains(grammer.Startsymbol))
+             if(!grammar.variables.Contains(grammar.startSymbol))
                 {
-                    grammer.Nonterminals.Add(grammer.Startsymbol);
+                    grammar.variables.Add(grammar.startSymbol);
                 }
-            foreach(var terminal in grammer.Terminals.ToList())
+            foreach(var terminal in grammar.terminals.ToList())
             {
-               if(grammer.Nonterminals.Contains(terminal.ToString()))
+               if(grammar.variables.Contains(terminal.ToString()))
                 {
-                    grammer.Nonterminals.Remove(terminal.ToString());
+                    grammar.variables.Remove(terminal.ToString());
                 } 
             }
-            return grammer;
+            return grammar;
         }
-        public bool Isterminal(char symbol)
+        public bool IsTerminal(char symbol)
         {
-            return Terminals.Contains(symbol);
+            return terminals.Contains(symbol);
         }
-        public bool Isnonterminal(string symbol)
+        public bool IsNonTerminal(string symbol)
         {
-            return Nonterminals.Contains(symbol);
+            return variables.Contains(symbol);
         }
     }
     public class GrammarConverter
     {
-        readonly Grammer _grammer;
-        public GrammarConverter(Grammer grammer)
+        readonly Grammar _grammar;
+        public GrammarConverter(Grammar grammar)
         {
-            _grammer = grammer ?? throw new Exception(nameof(grammer));
+            _grammar = grammar ?? throw new Exception(nameof(grammar));
         }
-        public GrammerType DetermineType()
+        public GrammarType DetermineType()
         {
             // Guard clauses
-            if (_grammer == null)
+            if (_grammar == null)
                 throw new Exception("Grammar object is null");
 
-            if (_grammer.Productions == null || _grammer.Productions.Count == 0)
+            if (_grammar.productions == null || _grammar.productions.Count == 0)
                 throw new Exception("Grammar has no productions to analyze");
 
-            if (_grammer.Nonterminals == null || _grammer.Nonterminals.Count == 0)
+            if (_grammar.variables == null || _grammar.variables.Count == 0)
                 throw new Exception("Grammar has no non-terminals defined");
 
             bool hasRightRegular = false;
             bool hasLeftRegular = false;
 
-            for (int i = 0; i < _grammer.Nonterminals.Count; i++)
+            for (int i = 0; i < _grammar.variables.Count; i++)
             {
-                string nonTerminal = _grammer.Nonterminals.ElementAt(i);
+                string nonTerminal = _grammar.variables.ElementAt(i);
 
-                if (!_grammer.Productions.ContainsKey(nonTerminal))
+                if (!_grammar.productions.ContainsKey(nonTerminal))
                     continue;
 
-                List<string> productions = _grammer.Productions[nonTerminal];
+                List<string> productions = _grammar.productions[nonTerminal];
 
                 if (productions == null || productions.Count == 0)
                     continue;
@@ -220,7 +220,7 @@ namespace ProjectNZM
 
                     // Neither right nor left regular → grammar is not regular
                     if (!isRight && !isLeft)
-                        return GrammerType.NotRegular;
+                        return GrammarType.Irregular;
 
                     if (isRight) hasRightRegular = true;
                     if (isLeft) hasLeftRegular = true;
@@ -228,9 +228,9 @@ namespace ProjectNZM
             }
 
             // Final classification based on observed production types
-            if (hasRightRegular && hasLeftRegular) return GrammerType.Mixed;
-            if (hasRightRegular) return GrammerType.RightRegular;
-            if (hasLeftRegular) return GrammerType.LeftRegular;
+            if (hasRightRegular && hasLeftRegular) return GrammarType.Mixed;
+            if (hasRightRegular) return GrammarType.RightRegular;
+            if (hasLeftRegular) return GrammarType.LeftRegular;
 
             throw new Exception("Unable to determine grammar type - no valid productions found");
         }
@@ -240,12 +240,12 @@ namespace ProjectNZM
 
             // A -> a
             if (production.Length == 1)
-                return _grammer.Isterminal(production[0]);
+                return _grammar.Isterminal(production[0]);
 
             // A -> aB
             if (production.Length == 2)
-                return _grammer.Isterminal(production[0]) &&
-                       _grammer.Isnonterminal(production[1].ToString());
+                return _grammar.Isterminal(production[0]) &&
+                       _grammar.Isnonterminal(production[1].ToString());
 
             return false;
         }
@@ -257,12 +257,12 @@ namespace ProjectNZM
 
             // A -> Ba only
             if (production.Length == 2)
-                return _grammer.Isnonterminal(production[0].ToString()) &&
-                       _grammer.Isterminal(production[1]);
+                return _grammar.Isnonterminal(production[0].ToString()) &&
+                       _grammar.Isterminal(production[1]);
 
             return false;
         }
-        public Dfa ConverttoDfa()
+        public DFA ConveretToDFA()
         {
             //will be completed by sajad
         }
