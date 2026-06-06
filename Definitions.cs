@@ -1,11 +1,18 @@
 using System;
-
+using System.Collections.Generic;
+using System.Linq;
 
 namespace ProjectNZM
 {
    public enum GrammerType
     {
         Regular,RightRegular,LeftRegular,Mixed,NotRegular,unknown
+    }
+    public class DfaTransition
+    {
+        public string FromState {get; set;}
+        public char Symbol {get; set;}
+        public string ToState {get; set;}
     }
     public class DfaTransitionView
     {
