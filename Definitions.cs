@@ -185,89 +185,47 @@ namespace ProjectNZM
         }
         public GrammerType DetermineType()
         {
-            // Guard clauses
-            if (_grammer == null)
-                throw new Exception("Grammar object is null");
+            bool isRightRegular = true;
+            bool isLeftRegular = true;
 
-            if (_grammer.Productions == null || _grammer.Productions.Count == 0)
-                throw new Exception("Grammar has no productions to analyze");
-
-            if (_grammer.Nonterminals == null || _grammer.Nonterminals.Count == 0)
-                throw new Exception("Grammar has no non-terminals defined");
-
-            bool hasRightRegular = false;
-            bool hasLeftRegular = false;
-
-            for (int i = 0; i < _grammer.Nonterminals.Count; i++)
+            foreach (var nt in _grammer.Nonterminals)
             {
-                string nonTerminal = _grammer.Nonterminals.ElementAt(i);
+                if (!_grammer.Productions.ContainsKey(nt)) continue;
 
-                if (!_grammer.Productions.ContainsKey(nonTerminal))
-                    continue;
-
-                List<string> productions = _grammer.Productions[nonTerminal];
-
-                if (productions == null || productions.Count == 0)
-                    continue;
-
-                for (int j = 0; j < productions.Count; j++)
+                foreach (var prod in _grammer.Productions[nt])
                 {
-                    string production = productions[j];
+                    if (prod == "ε" || prod == "λ") continue;
 
-                    if (string.IsNullOrEmpty(production))
-                        throw new Exception($"Non-terminal '{nonTerminal}' has an empty or null production");
+                    // Check if production follows right-linear pattern
+                    bool followsRight = false;
+                    bool followsLeft = false;
 
-                    if (production == "ε" || production == "λ")
-                      {
-                         hasRightRegular = true;
-                         continue;
-                      }
-                    bool isRight = CheckRightRegular(production);
-                    bool isLeft = CheckLeftRegular(production);
+                    // Right-linear: A -> a or A -> aB
+                    if (prod.Length == 1 && _grammer.Isterminal(prod[0]))
+                        followsRight = true;
+                    else if (prod.Length == 2 && 
+                            _grammer.Isterminal(prod[0]) && 
+                            _grammer.Isnonterminal(prod[1].ToString()))
+                        followsRight = true;
 
-                    // Neither right nor left regular → grammar is not regular
-                    if (!isRight && !isLeft)
-                        return GrammerType.NotRegular;
+                    // Left-linear: A -> a or A -> Ba  
+                    if (prod.Length == 1 && _grammer.Isterminal(prod[0]))
+                        followsLeft = true;
+                    else if (prod.Length == 2 && 
+                            _grammer.Isnonterminal(prod[0].ToString()) && 
+                            _grammer.Isterminal(prod[1]))
+                        followsLeft = true;
 
-                    if (isRight) hasRightRegular = true;
-                    if (isLeft) hasLeftRegular = true;
+                    if (!followsRight) isRightRegular = false;
+                    if (!followsLeft) isLeftRegular = false;
                 }
             }
 
-            // Final classification based on observed production types
-            if (hasRightRegular && hasLeftRegular) return GrammerType.Mixed;
-            if (hasRightRegular) return GrammerType.RightRegular;
-            if (hasLeftRegular) return GrammerType.LeftRegular;
+            if (isRightRegular && isLeftRegular) return GrammerType.Regular;
+            if (isRightRegular) return GrammerType.RightRegular;
+            if (isLeftRegular) return GrammerType.LeftRegular;
 
-            throw new Exception("Unable to determine grammar type - no valid productions found");
-        }
-        private bool CheckRightRegular(string production)
-        {
-            if (string.IsNullOrEmpty(production)) return false;
-
-            // A -> a
-            if (production.Length == 1)
-                return _grammer.Isterminal(production[0]);
-
-            // A -> aB
-            if (production.Length == 2)
-                return _grammer.Isterminal(production[0]) &&
-                       _grammer.Isnonterminal(production[1].ToString());
-
-            return false;
-        }
-
-        private bool CheckLeftRegular(string production)
-        {
-            if (string.IsNullOrEmpty(production)) return false;
-
-
-            // A -> Ba only
-            if (production.Length == 2)
-                return _grammer.Isnonterminal(production[0].ToString()) &&
-                       _grammer.Isterminal(production[1]);
-
-            return false;
+            return GrammerType.NotRegular;
         }
         public Dfa ConverttoDfa()
         {
