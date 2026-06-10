@@ -227,9 +227,108 @@ namespace ProjectNZM
 
             return GrammerType.NotRegular;
         }
-        public Dfa ConverttoDfa()
-        {
-            //will be completed by sajad
+        public Dfa ConvertToDFA()
+            {
+                var dfa = new Dfa();
+                dfa.StartState = _grammer.Startsymbol;
+
+                // Add all nonterminals as states
+                foreach (var nt in _grammer.Nonterminals)
+                    dfa.Allstates.Add(nt);
+
+                string finalState = "F";
+                string deadState = "D";
+
+                dfa.Allstates.Add(finalState);
+                dfa.Allstates.Add(deadState);
+
+                // First pass: create transitions from grammar rules
+                foreach (var nt in _grammer.Nonterminals)
+                {
+                    if (!_grammer.Productions.ContainsKey(nt)) continue;
+
+                    foreach (var prod in _grammer.Productions[nt])
+                    {
+                        if (prod == "ε" || prod == "λ")
+                        {
+                            // ε-production: nt is a final state
+                            dfa.Finalstates.Add(nt);
+                            continue;
+                        }
+
+                        if (prod.Length == 1 && _grammer.Isterminal(prod[0]))
+                        {
+                            // A -> a
+                            dfa.Transitions.Add(new DfaTransition
+                            {
+                                FromState = nt,
+                                Symbol = prod[0],
+                                ToState = finalState
+                            });
+                            dfa.Finalstates.Add(finalState);
+                        }
+                        else if (prod.Length == 2 && _grammer.Isterminal(prod[0]) && _grammer.Isnonterminal(prod[1].ToString()))
+                        {
+                            // A -> aB (right regular)
+                            dfa.Transitions.Add(new DfaTransition
+                            {
+                                FromState = nt,
+                                Symbol = prod[0],
+                                ToState = prod[1].ToString()
+                            });
+                        }
+                        else if (prod.Length == 2 && _grammer.Isnonterminal(prod[0].ToString()) && _grammer.Isterminal(prod[1]))
+                        {
+                            // A -> Ba (left regular)
+                            dfa.Transitions.Add(new DfaTransition
+                            {
+                                FromState = nt,
+                                Symbol = prod[1],
+                                ToState = prod[0].ToString()
+                            });
+                        }
+                        else
+                        {
+                            // This shouldn't happen for regular grammars
+                            throw new Exception($"Invalid production for DFA conversion: {nt} -> {prod}");
+                        }
+                    }
+                }
+
+                // Add missing transitions to dead state (complete DFA)
+                foreach (var state in dfa.Allstates.ToList())
+                {
+                    foreach (char symbol in _grammer.Terminals)
+                    {
+                        bool hasTransition = dfa.Transitions.Any(t => t.FromState == state && t.Symbol == symbol);
+                        if (!hasTransition && state != deadState)
+                        {
+                            dfa.Transitions.Add(new DfaTransition
+                            {
+                                FromState = state,
+                                Symbol = symbol,
+                                ToState = deadState
+                            });
+                        }
+                    }
+                }
+
+                // Dead state loops on all terminals
+                foreach (char symbol in _grammer.Terminals)
+                {
+                    bool hasDeadTransition = dfa.Transitions.Any(t => t.FromState == deadState && t.Symbol == symbol);
+                    if (!hasDeadTransition)
+                    {
+                        dfa.Transitions.Add(new DfaTransition
+                        {
+                            FromState = deadState,
+                            Symbol = symbol,
+                            ToState = deadState
+                        });
+                    }
+                }
+
+                return dfa;
+            }
         }
     }
-}
