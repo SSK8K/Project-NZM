@@ -1,0 +1,14 @@
+C:\Users\vahid\Desktop\Project-NZM\DFA-Builder\DFA-winforms\obj\Debug\net9.0-windows\DFA-winforms.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\vahid\Desktop\Project-NZM\DFA-Builder\DFA-winforms\obj\Debug\net9.0-windows\DFA-winforms.AssemblyInfoInputs.cache
+C:\Users\vahid\Desktop\Project-NZM\DFA-Builder\DFA-winforms\obj\Debug\net9.0-windows\DFA-winforms.AssemblyInfo.cs
+C:\Users\vahid\Desktop\Project-NZM\DFA-Builder\DFA-winforms\obj\Debug\net9.0-windows\DFA-winforms.csproj.CoreCompileInputs.cache
+C:\Users\vahid\Desktop\Project-NZM\DFA-Builder\DFA-winforms\bin\Debug\net9.0-windows\DFA-winforms.exe
+C:\Users\vahid\Desktop\Project-NZM\DFA-Builder\DFA-winforms\bin\Debug\net9.0-windows\DFA-winforms.deps.json
+C:\Users\vahid\Desktop\Project-NZM\DFA-Builder\DFA-winforms\bin\Debug\net9.0-windows\DFA-winforms.runtimeconfig.json
+C:\Users\vahid\Desktop\Project-NZM\DFA-Builder\DFA-winforms\bin\Debug\net9.0-windows\DFA-winforms.dll
+C:\Users\vahid\Desktop\Project-NZM\DFA-Builder\DFA-winforms\bin\Debug\net9.0-windows\DFA-winforms.pdb
+C:\Users\vahid\Desktop\Project-NZM\DFA-Builder\DFA-winforms\obj\Debug\net9.0-windows\DFA-winforms.dll
+C:\Users\vahid\Desktop\Project-NZM\DFA-Builder\DFA-winforms\obj\Debug\net9.0-windows\refint\DFA-winforms.dll
+C:\Users\vahid\Desktop\Project-NZM\DFA-Builder\DFA-winforms\obj\Debug\net9.0-windows\DFA-winforms.pdb
+C:\Users\vahid\Desktop\Project-NZM\DFA-Builder\DFA-winforms\obj\Debug\net9.0-windows\DFA-winforms.genruntimeconfig.cache
+C:\Users\vahid\Desktop\Project-NZM\DFA-Builder\DFA-winforms\obj\Debug\net9.0-windows\ref\DFA-winforms.dll
