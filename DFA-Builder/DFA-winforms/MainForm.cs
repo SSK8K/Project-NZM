@@ -122,7 +122,89 @@ X->bS";
         }
          private void PnlGraph_Paint(object sender, PaintEventArgs e)
         {
-            //for ali
+                    if (currentDfa == null) 
+                    {
+                        Graphics g = e.Graphics;
+                g.DrawString("No DFA to display. Enter a regular grammar and click 'Analyze & Draw DFA'.",
+                        new Font("Arial", 12), Brushes.Gray, new PointF(50, 150));
+                        return;
+                    }
+
+                    Graphics g2 = e.Graphics;
+                    g2.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+
+                    var positions = new Dictionary<string, Point>();
+                    var states = currentDfa.Allstates.ToList();
+                    int radius = 35;
+                    int centerX = pnlGraph.Width / 2;
+                    int centerY = pnlGraph.Height / 2;
+
+                    // Position states in a circle
+                    for (int i = 0; i < states.Count; i++)
+                    {
+                        double angle = 2 * Math.PI * i / states.Count - Math.PI / 2;
+                        int x = centerX + (int)(180 * Math.Cos(angle));
+                        int y = centerY + (int)(180 * Math.Sin(angle));
+                        positions[states[i]] = new Point(x, y);
+                    }
+
+                    // Draw transitions
+                    foreach (var transition in currentDfa.Transitions)
+                    {
+                        if (positions.ContainsKey(transition.FromState) && positions.ContainsKey(transition.ToState))
+                        {
+                            DrawArrow(g2, positions[transition.FromState], positions[transition.ToState], 
+                                    transition.Symbol.ToString(), radius);
+                        }
+                    }
+
+                    // Draw states
+                    foreach (var state in states)
+                    {
+                        Point pos = positions[state];
+                        bool isFinal = currentDfa.Finalstates.Contains(state);
+                        bool isStart = state == currentDfa.StartState;
+
+                        // Draw circle
+                        if (isFinal)
+                        {
+                            g2.DrawEllipse(Pens.Black, pos.X - radius, pos.Y - radius, radius * 2, radius * 2);
+                            g2.DrawEllipse(Pens.Black, pos.X - radius + 4, pos.Y - radius + 4, 
+                                        (radius - 4) * 2, (radius - 4) * 2);
+                        }
+                        else
+                        {
+                            g2.DrawEllipse(Pens.Black, pos.X - radius, pos.Y - radius, radius * 2, radius * 2);
+                        }
+
+                        // Fill state
+                        if (isStart && isFinal)
+                            g2.FillEllipse(Brushes.LightGreen, pos.X - radius + 1, pos.Y - radius + 1, 
+                                        radius * 2 - 2, radius * 2 - 2);
+                        else if (isStart)
+                            g2.FillEllipse(Brushes.LightGreen, pos.X - radius + 1, pos.Y - radius + 1, 
+                                        radius * 2 - 2, radius * 2 - 2);
+                        else if (isFinal)
+                            g2.FillEllipse(Brushes.LightYellow, pos.X - radius + 1, pos.Y - radius + 1, 
+                                        radius * 2 - 2, radius * 2 - 2);
+                        else
+                            g2.FillEllipse(Brushes.White, pos.X - radius + 1, pos.Y - radius + 1, 
+                                        radius * 2 - 2, radius * 2 - 2);
+
+                        // Draw start arrow
+                        if (isStart)
+                        {
+                            g2.DrawLine(Pens.Black, pos.X - radius - 20, pos.Y, pos.X - radius, pos.Y);
+                            g2.DrawLine(Pens.Black, pos.X - radius - 10, pos.Y - 6, pos.X - radius, pos.Y);
+                            g2.DrawLine(Pens.Black, pos.X - radius - 10, pos.Y + 6, pos.X - radius, pos.Y);
+                        }
+
+                        // Draw state name
+                        var font = new Font("Arial", 11, FontStyle.Bold);
+                        var size = g2.MeasureString(state, font);
+                        g2.DrawString(state, font, Brushes.Black, 
+                                    pos.X - size.Width / 2, pos.Y - size.Height / 2);
+                    }
         }
          private void DrawArrow(Graphics g, Point from, Point to, string label, int radius)
         {
