@@ -206,9 +206,46 @@ X->bS";
                                     pos.X - size.Width / 2, pos.Y - size.Height / 2);
                     }
         }
-         private void DrawArrow(Graphics g, Point from, Point to, string label, int radius)
+        private void DrawArrow(Graphics g, Point from, Point to, string label, int radius)
         {
-            //for sajad
+            double angle = Math.Atan2(to.Y - from.Y, to.X - from.X);
+            int startX = from.X + (int)(radius * Math.Cos(angle));
+            int startY = from.Y + (int)(radius * Math.Sin(angle));
+            int endX = to.X - (int)(radius * Math.Cos(angle));
+            int endY = to.Y - (int)(radius * Math.Sin(angle));
+            
+            // Draw line
+            using (Pen pen = new Pen(Color.Blue, 2))
+            {
+                g.DrawLine(pen, startX, startY, endX, endY);
+            }
+            
+            // Draw arrowhead
+            double arrowAngle = Math.PI / 6;
+            int arrowSize = 12;
+            int arrowX = endX;
+            int arrowY = endY;
+            int arrowX1 = (int)(arrowX - arrowSize * Math.Cos(angle - arrowAngle));
+            int arrowY1 = (int)(arrowY - arrowSize * Math.Sin(angle - arrowAngle));
+            int arrowX2 = (int)(arrowX - arrowSize * Math.Cos(angle + arrowAngle));
+            int arrowY2 = (int)(arrowY - arrowSize * Math.Sin(angle + arrowAngle));
+            
+            using (Pen pen = new Pen(Color.Blue, 2))
+            {
+                g.DrawLine(pen, arrowX, arrowY, arrowX1, arrowY1);
+                g.DrawLine(pen, arrowX, arrowY, arrowX2, arrowY2);
+            }
+            
+            // Draw label
+            int midX = (startX + endX) / 2;
+            int midY = (startY + endY) / 2;
+            var font = new Font("Arial", 10, FontStyle.Bold);
+            var size = g.MeasureString(label, font);
+            
+            g.FillRectangle(Brushes.White, midX - size.Width / 2 - 2, midY - size.Height / 2 - 2, 
+                           size.Width + 4, size.Height + 4);
+            g.DrawString(label, font, Brushes.Red, 
+                        midX - size.Width / 2, midY - size.Height / 2);
         }
     }
 }
