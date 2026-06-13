@@ -279,22 +279,26 @@ namespace ProjectNZM
 
             return GrammerType.NotRegular;
         }
-        public Dfa ConvertToDFA()
+       public Dfa ConvertToDFA()
+        {
+            var type = DetermineType();
+            return (type == GrammerType.LeftRegular)
+                ? ConvertLeftLinearToDFA()
+                : ConvertRightLinearToDFA();
+        }
+        private Dfa ConvertRightLinearToDFA()
         {
             var dfa = new Dfa();
             dfa.StartState = _grammer.Startsymbol;
 
-            // Add all nonterminals as states
             foreach (var nt in _grammer.Nonterminals)
                 dfa.Allstates.Add(nt);
 
-            string finalState = "F";
-            string deadState = "D";
-
+            const string finalState = "F";
+            const string deadState  = "D";
             dfa.Allstates.Add(finalState);
             dfa.Allstates.Add(deadState);
 
-            // First pass: create transitions from grammar rules
             foreach (var nt in _grammer.Nonterminals)
             {
                 if (!_grammer.Productions.ContainsKey(nt)) continue;
@@ -303,106 +307,214 @@ namespace ProjectNZM
                 {
                     if (prod == "ε" || prod == "λ")
                     {
-                        // ε-production: nt is a final state
                         dfa.Finalstates.Add(nt);
                         continue;
                     }
 
-                    if (prod.Length >= 1)
+                    char lastChar = prod[prod.Length - 1];
+
+                    if (_grammer.Isterminal(lastChar))
                     {
-                        char lastChar = prod[prod.Length - 1];
+                        bool allTerminals = prod.All(c => _grammer.Isterminal(c));
+                        if (!allTerminals)
+                            throw new Exception($"Invalid production: {nt} -> {prod}");
 
-                        if (_grammer.Isterminal(lastChar) && prod.Length == 1)
+                        string cur = nt;
+                        for (int i = 0; i < prod.Length; i++)
                         {
-                            // A -> a
-                            AddTransitionWithConflictCheck(dfa, nt, prod[0], finalState);
-                            dfa.Finalstates.Add(finalState);
-                        }
-                        else if (_grammer.Isnonterminal(lastChar.ToString()))
-                        {
-                            // بررسی کنید بقیه terminal هستند
-                            bool allTerminals = true;
-                            for (int i = 0; i < prod.Length - 1; i++)
+                            string next;
+                            if (i == prod.Length - 1)
                             {
-                                if (!_grammer.Isterminal(prod[i]))
-                                {
-                                    allTerminals = false;
-                                    break;
-                                }
-                            }
-
-                            if (allTerminals)
-                            {
-                                string currentState = nt;
-                                // ایجاد state‌های میانی برای زنجیره terminal‌ها
-                                for (int i = 0; i < prod.Length - 1; i++)
-                                {
-                                    string nextState;
-                                    if (i == prod.Length - 2)
-                                    {
-                                        // آخرین transition به nonterminal اصلی
-                                        nextState = lastChar.ToString();
-                                    }
-                                    else
-                                    {
-                                        // state موقت
-                                        nextState = $"q_{nt}_{i}";
-                                        if (!dfa.Allstates.Contains(nextState))
-                                            dfa.Allstates.Add(nextState);
-                                    }
-
-                                    AddTransitionWithConflictCheck(dfa, currentState, prod[i], nextState);
-                                    currentState = nextState;
-                                }
+                                next = finalState;
                             }
                             else
                             {
-                                throw new Exception($"Invalid production for DFA conversion: {nt} -> {prod}");
+                                next = $"q_{nt}_r_{i}";
+                                if (!dfa.Allstates.Contains(next))
+                                    dfa.Allstates.Add(next);
+                            }
+                            AddTransitionSafe(dfa, cur, prod[i], next);
+                            cur = next;
+                        }
+                        dfa.Finalstates.Add(finalState);
+                    }
+                    else if (_grammer.Isnonterminal(lastChar.ToString()))
+                    {
+                        bool allBeforeTerminals = prod.Take(prod.Length - 1)
+                                                      .All(c => _grammer.Isterminal(c));
+                        if (!allBeforeTerminals)
+                            throw new Exception($"Invalid production: {nt} -> {prod}");
+
+                        string cur = nt;
+                        for (int i = 0; i < prod.Length - 1; i++)
+                        {
+                            string next = (i == prod.Length - 2)
+                                ? lastChar.ToString()
+                                : $"q_{nt}_r_{i}";
+
+                            if (!dfa.Allstates.Contains(next))
+                                dfa.Allstates.Add(next);
+
+                            AddTransitionSafe(dfa, cur, prod[i], next);
+                            cur = next;
+                        }
+                    }
+                }
+            }
+
+            FillDeadTransitions(dfa, deadState);
+            return dfa;
+        }
+        private Dfa ConvertLeftLinearToDFA()
+        {
+            var dfa = new Dfa();
+
+            foreach (var nt in _grammer.Nonterminals)
+                dfa.Allstates.Add(nt);
+
+            const string deadState = "D";
+            dfa.Allstates.Add(deadState);
+            dfa.StartState = _grammer.Startsymbol;
+
+            foreach (var kvp in _grammer.Productions)
+                if (kvp.Value.Any(p => p == "ε" || p == "λ"))
+                    dfa.Finalstates.Add(kvp.Key);
+
+            foreach (var kvp in _grammer.Productions)
+            {
+                string lhs = kvp.Key;
+
+                foreach (var prod in kvp.Value)
+                {
+                    if (prod == "ε" || prod == "λ") continue;
+
+                    char firstChar = prod[0];
+
+                    if (_grammer.Isnonterminal(firstChar.ToString()))
+                    {
+                        string targetNT = firstChar.ToString(); 
+                      string terminals = new string(prod.Substring(1).Reverse().ToArray());   // w
+
+                        if (terminals.Length == 0) continue;
+
+                        if (terminals.Length == 1)
+                        {
+                            AddTransitionSafe(dfa, lhs, terminals[0], targetNT);
+                        }
+                        else
+                        {
+                            string cur = lhs;
+                            for (int i = 0; i < terminals.Length; i++)
+                            {
+                                string next;
+                                if (i == terminals.Length - 1)
+                                {
+                                    next = targetNT;
+                                }
+                                else
+                                {
+                                    next = $"q_{lhs}_{targetNT}_{i}";
+                                    if (!dfa.Allstates.Contains(next))
+                                        dfa.Allstates.Add(next);
+                                }
+                                AddTransitionSafe(dfa, cur, terminals[i], next);
+                                cur = next;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        const string pureTerminalFinal = "F";
+                        if (!dfa.Allstates.Contains(pureTerminalFinal))
+                            dfa.Allstates.Add(pureTerminalFinal);
+                        if (!dfa.Finalstates.Contains(pureTerminalFinal))
+                            dfa.Finalstates.Add(pureTerminalFinal);
+
+                        if (prod.Length == 1)
+                        {
+                            AddTransitionSafe(dfa, lhs, prod[0], pureTerminalFinal);
+                        }
+                        else
+                        {
+                            string cur = lhs;
+                            for (int i = 0; i < prod.Length; i++)
+                            {
+                                string next;
+                                if (i == prod.Length - 1)
+                                {
+                                    next = pureTerminalFinal;
+                                }
+                                else
+                                {
+                                    next = $"q_{lhs}_t_{i}";
+                                    if (!dfa.Allstates.Contains(next))
+                                        dfa.Allstates.Add(next);
+                                }
+                                AddTransitionSafe(dfa, cur, prod[i], next);
+                                cur = next;
                             }
                         }
                     }
                 }
             }
 
-            // اضافه کردن transitions به dead state
-            foreach (var state in dfa.Allstates.ToList())
+            FillDeadTransitions(dfa, deadState);
+            return dfa;
+        }
+        private void FillDeadTransitions(Dfa dfa, string dead)
+        {
+            var allStatesSnapshot = dfa.Allstates.ToList();
+
+            foreach (var st in allStatesSnapshot)
             {
-                foreach (char symbol in _grammer.Terminals)
+                foreach (char sym in _grammer.Terminals)
                 {
-                    bool hasTransition = dfa.Transitions.Any(t => t.FromState == state && t.Symbol == symbol);
-                    if (!hasTransition && state != deadState)
+                    bool has = dfa.Transitions.Any(
+                        t => t.FromState == st && t.Symbol == sym);
+                    if (!has && st != dead)
                     {
-                        AddTransitionWithConflictCheck(dfa, state, symbol, deadState);
+                        dfa.Transitions.Add(new DfaTransition
+                        {
+                            FromState = st,
+                            Symbol    = sym,
+                            ToState   = dead
+                        });
                     }
                 }
             }
+            if (!dfa.Allstates.Contains(dead))
+                dfa.Allstates.Add(dead);
 
-            foreach (char symbol in _grammer.Terminals)
+            foreach (char sym in _grammer.Terminals)
             {
-                bool hasDeadTransition = dfa.Transitions.Any(t => t.FromState == deadState && t.Symbol == symbol);
-                if (!hasDeadTransition)
+                bool has = dfa.Transitions.Any(
+                    t => t.FromState == dead && t.Symbol == sym);
+                if (!has)
                 {
-                    AddTransitionWithConflictCheck(dfa, deadState, symbol, deadState);
+                    dfa.Transitions.Add(new DfaTransition
+                    {
+                        FromState = dead,
+                        Symbol    = sym,
+                        ToState   = dead
+                    });
                 }
             }
-
-            return dfa;
         }
 
-        // متد کمکی برای چک کردن conflict
-        private void AddTransitionWithConflictCheck(Dfa dfa, string fromState, char symbol, string toState)
+        private void AddTransitionSafe(Dfa dfa, string from, char sym, string to)
         {
-            bool exists = dfa.Transitions.Any(t => t.FromState == fromState && t.Symbol == symbol);
+            bool exists = dfa.Transitions.Any(
+                t => t.FromState == from && t.Symbol == sym);
             if (exists)
-            {
-                throw new Exception($"Conflict detected: From state '{fromState}' with symbol '{symbol}' already has a transition. Grammar is non-deterministic!");
-            }
+                throw new Exception(
+                    $"Conflict: '{from}' --{sym}--> already exists. " +
+                    $"Grammar may be non-deterministic!");
 
             dfa.Transitions.Add(new DfaTransition
             {
-                FromState = fromState,
-                Symbol = symbol,
-                ToState = toState
+                FromState = from,
+                Symbol    = sym,
+                ToState   = to
             });
         }
     }
