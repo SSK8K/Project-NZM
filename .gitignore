@@ -18,3 +18,5 @@
 
 # Keep editor-specific files out of source control
 .vscode/
+DFA-Builder/DFA-winforms/bin
+DFA-Builder/DFA-winforms/obj
