@@ -200,24 +200,19 @@ namespace ProjectNZM
                 {
                     if (prod == "ε" || prod == "λ") continue;
 
-                    // Check if production follows right-linear pattern
                     bool followsRight = false;
                     bool followsLeft = false;
 
-                    // Right-linear: A -> wB یا A -> w (که w شامل یک یا چند terminal است)
                     if (prod.Length >= 1)
                     {
-                        // پیدا کردن آخرین کاراکتر
                         char lastChar = prod[prod.Length - 1];
 
                         if (_grammer.Isterminal(lastChar) && prod.Length == 1)
                         {
-                            // A -> a
                             followsRight = true;
                         }
                         else if (_grammer.Isnonterminal(lastChar.ToString()))
                         {
-                            // بررسی کنید همه کاراکترهای قبل nonterminal باشند
                             bool allBeforeAreTerminals = true;
                             for (int i = 0; i < prod.Length - 1; i++)
                             {
@@ -229,25 +224,21 @@ namespace ProjectNZM
                             }
                             if (allBeforeAreTerminals)
                             {
-                                // A -> a1 a2 ... an B
                                 followsRight = true;
                             }
                         }
                     }
 
-                    // Left-linear: A -> Bw یا A -> w
                     if (prod.Length >= 1)
                     {
                         char firstChar = prod[0];
 
                         if (_grammer.Isterminal(firstChar) && prod.Length == 1)
                         {
-                            // A -> a
                             followsLeft = true;
                         }
                         else if (_grammer.Isnonterminal(firstChar.ToString()))
                         {
-                            // بررسی کنید همه کاراکترهای بعد terminal باشند
                             bool allAfterAreTerminals = true;
                             for (int i = 1; i < prod.Length; i++)
                             {
@@ -259,7 +250,6 @@ namespace ProjectNZM
                             }
                             if (allAfterAreTerminals)
                             {
-                                // A -> B a1 a2 ... an
                                 followsLeft = true;
                             }
                         }
@@ -268,7 +258,6 @@ namespace ProjectNZM
                     if (!followsRight) isRightRegular = false;
                     if (!followsLeft) isLeftRegular = false;
 
-                    // اگر هر دو false شدند، دیگر نیازی به ادامه نیست
                     if (!isRightRegular && !isLeftRegular)
                         return GrammerType.NotRegular;
                 }
