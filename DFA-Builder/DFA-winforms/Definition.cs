@@ -286,8 +286,6 @@ namespace ProjectNZM
 
                     if (type == GrammerType.LeftRegular)
                     {
-                        // در چپ خطی A -> Bw شکل هست
-                        // آخرین کاراکتر ترمینال تریگره
                         char lastChar = prod[prod.Length - 1];
                         if (!_grammer.Isterminal(lastChar)) continue;
 
@@ -298,8 +296,6 @@ namespace ProjectNZM
                     }
                     else
                     {
-                        // در راست خطی A -> wB شکل هست
-                        // اولین کاراکتر ترمینال تریگره
                         char firstChar = prod[0];
                         if (!_grammer.Isterminal(firstChar)) continue;
 

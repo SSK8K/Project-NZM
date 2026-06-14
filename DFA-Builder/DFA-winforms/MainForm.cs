@@ -27,7 +27,6 @@ namespace ProjectNZM
             this.Size = new Size(1200, 900);
             this.StartPosition = FormStartPosition.CenterScreen;
 
-            // Panel ورودی
             var pnlInput = new Panel
             {
                 Location = new Point(10, 10),
@@ -52,7 +51,6 @@ namespace ProjectNZM
                 Font = new Font("Consolas", 10)
             };
 
-            // مثال پیش‌فرض
             txtGrammar.Text = @"S->aA
 A->aX|b
 X->bS";
@@ -70,7 +68,6 @@ X->bS";
 
             pnlInput.Controls.AddRange(new Control[] { lblGrammar, txtGrammar, btnAnalyze });
 
-            // Panel نتیجه
             var pnlResult = new Panel
             {
                 Location = new Point(520, 10),
@@ -96,7 +93,6 @@ X->bS";
 
             pnlResult.Controls.AddRange(new Control[] { lblResult, rtbResult });
 
-            // Panel گراف
             var lblGraph = new Label
             {
                 Text = "DFA Graph:",
@@ -221,7 +217,6 @@ X->bS";
             int centerX = pnlGraph.Width / 2;
             int centerY = pnlGraph.Height / 2;
 
-            // Position states in a circle
             var positions = new Dictionary<string, Point>();
             for (int i = 0; i < states.Count; i++)
             {
@@ -236,7 +231,6 @@ X->bS";
                 positions["S"] = new Point(sPos.X, sPos.Y + 30);
             }
 
-            // Draw transitions
             var transitionGroups = new Dictionary<string, List<char>>();
             foreach (var t in currentDfa.Transitions)
             {
@@ -246,7 +240,6 @@ X->bS";
                 if (!transitionGroups[key].Contains(t.Symbol))
                     transitionGroups[key].Add(t.Symbol);
             }
-            // رسم یال‌ها
             foreach (var group in transitionGroups)
             {
                 var parts = group.Key.Split(new[] { "->" }, StringSplitOptions.None);
@@ -267,32 +260,26 @@ X->bS";
                 }
             }
 
-            // Draw states
             foreach (var state in states)
             {
                 Point pos = positions[state];
                 bool isFinal = currentDfa.Finalstates.Contains(state);
                 bool isStart = state == currentDfa.StartState;
 
-                // دایره بیرونی
                 g2.DrawEllipse(Pens.Black, pos.X - radius, pos.Y - radius, radius * 2, radius * 2);
                 if (isStart && isFinal)
                 {
-                    // دایره بیرونی (ضخیم‌تر برای دیده شدن بهتر)
                     using (Pen thickPen = new Pen(Color.Black, 2.5f))
                     {
                         g2.DrawEllipse(thickPen, pos.X - radius, pos.Y - radius, radius * 2, radius * 2);
                     }
 
-                    // دایره دوم (حلقه داخلی برای final)
                     g2.DrawEllipse(Pens.Black, pos.X - radius + 5, pos.Y - radius + 5,
                                   (radius - 5) * 2, (radius - 5) * 2);
 
-                    // رنگ مخصوص (سبز-زرد برای start+final)
                     g2.FillEllipse(Brushes.LightGreen, pos.X - radius + 1, pos.Y - radius + 1,
                                   radius * 2 - 2, radius * 2 - 2);
 
-                    // یه هایلایت زرد روشن دور داخلی
                     using (Pen yellowPen = new Pen(Color.Gold, 1.5f))
                     {
                         g2.DrawEllipse(yellowPen, pos.X - radius + 3, pos.Y - radius + 3,
@@ -300,14 +287,12 @@ X->bS";
                     }
                 }
 
-                // دایره داخلی برای final state
                 if (isFinal)
                 {
                     g2.DrawEllipse(Pens.Black, pos.X - radius + 5, pos.Y - radius + 5,
                                   (radius - 5) * 2, (radius - 5) * 2);
                 }
 
-                // رنگ‌بندی
                 if (isStart)
                 {
                     g2.FillEllipse(Brushes.LightGreen, pos.X - radius + 1, pos.Y - radius + 1,
@@ -324,7 +309,6 @@ X->bS";
                                   radius * 2 - 2, radius * 2 - 2);
                 }
 
-                // فلش شروع (فقط برای start state)
                 if (isStart)
                 {
                     int arrowX = pos.X - radius - 15;
@@ -334,7 +318,6 @@ X->bS";
                     g2.DrawLine(new Pen(Color.Black, 2), pos.X - radius - 6, arrowY + 4, pos.X - radius, arrowY);
                 }
 
-                // نام state
                 using (var font = new Font("Arial", 11, FontStyle.Bold))
                 {
                     var size = g2.MeasureString(state, font);
@@ -349,16 +332,13 @@ X->bS";
             int loopX = center.X - loopSize / 2;
             int loopY = center.Y - radius - loopSize;
 
-            // رسم دایره بالای state
             g.DrawEllipse(new Pen(Color.Blue, 2), loopX, loopY, loopSize, loopSize);
 
-            // پیکان
             int arrowX = center.X;
             int arrowY = center.Y - radius - 5;
             g.DrawLine(new Pen(Color.Blue, 2), arrowX, arrowY, arrowX - 5, arrowY - 7);
             g.DrawLine(new Pen(Color.Blue, 2), arrowX, arrowY, arrowX + 5, arrowY - 7);
 
-            // برچسب
             using (var font = new Font("Arial", 9, FontStyle.Bold))
             {
                 var size = g.MeasureString(labels, font);
@@ -377,10 +357,8 @@ X->bS";
             int endX = to.X - (int)(radius * Math.Cos(angle));
             int endY = to.Y - (int)(radius * Math.Sin(angle));
 
-            // Draw line
             g.DrawLine(new Pen(Color.Blue, 2), startX, startY, endX, endY);
 
-            // Draw arrowhead
             double arrowAngle = Math.PI / 6;
             int arrowSize = 12;
             int arrowX = endX;
@@ -393,10 +371,8 @@ X->bS";
             g.DrawLine(new Pen(Color.Blue, 2), arrowX, arrowY, arrowX1, arrowY1);
             g.DrawLine(new Pen(Color.Blue, 2), arrowX, arrowY, arrowX2, arrowY2);
 
-            // Draw label
             int midX = (startX + endX) / 2;
             int midY = (startY + endY) / 2;
-            // انحراف عمود بر خط
             double perpAngle = angle + Math.PI / 2;
             int offset = 12;
             int labelX = midX + (int)(offset * Math.Cos(perpAngle));
