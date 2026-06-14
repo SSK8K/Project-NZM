@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("DFA-winforms")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6387b8d66d683ad18c189ec9ea9623819ddf5689")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+98a6d68fd1ba463a45436f197561243ca2b90b59")]
 [assembly: System.Reflection.AssemblyProductAttribute("DFA-winforms")]
 [assembly: System.Reflection.AssemblyTitleAttribute("DFA-winforms")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
