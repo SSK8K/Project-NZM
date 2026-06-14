@@ -142,7 +142,7 @@ namespace ProjectNZM
             var symbolsInProductions = grammer.Productions.Values.SelectMany(list => list).SelectMany(p => p.Where(c => c != 'ε' && c != 'λ'));
             foreach (char symbol in symbolsInProductions)
             {
-                if(char.IsDigit(symbol))
+                if (char.IsDigit(symbol))
                 {
                     grammer.Terminals.Add(symbol);
                 }
@@ -268,253 +268,253 @@ namespace ProjectNZM
 
             return GrammerType.NotRegular;
         }
-public bool IsNfaLike()
-{
-    var type = DetermineType();
-    var seen = new Dictionary<(string, char), string>();
-
-    foreach (var nt in _grammer.Nonterminals)
-    {
-        if (!_grammer.Productions.ContainsKey(nt)) continue;
-
-        foreach (var prod in _grammer.Productions[nt])
+        public bool IsNfaLike()
         {
-            if (prod == "ε" || prod == "λ") continue;
+            var type = DetermineType();
+            var seen = new Dictionary<(string, char), string>();
 
-            string destination;
-            char triggerChar;
-
-            if (type == GrammerType.LeftRegular)
+            foreach (var nt in _grammer.Nonterminals)
             {
-                // در چپ خطی A -> Bw شکل هست
-                // آخرین کاراکتر ترمینال تریگره
-                char lastChar = prod[prod.Length - 1];
-                if (!_grammer.Isterminal(lastChar)) continue;
+                if (!_grammer.Productions.ContainsKey(nt)) continue;
 
-                triggerChar = lastChar;
-                destination = prod.Length == 1
-                    ? "F"
-                    : prod[0].ToString();
-            }
-            else
-            {
-                // در راست خطی A -> wB شکل هست
-                // اولین کاراکتر ترمینال تریگره
-                char firstChar = prod[0];
-                if (!_grammer.Isterminal(firstChar)) continue;
-
-                triggerChar = firstChar;
-                destination = prod.Length == 1
-                    ? "F"
-                    : prod[prod.Length - 1].ToString();
-            }
-
-            var key = (nt, triggerChar);
-            if (seen.ContainsKey(key) && seen[key] != destination)
-                return true;
-
-            seen[key] = destination;
-        }
-    }
-    return false;
-}
-
-private Dictionary<(string, char), HashSet<string>> BuildNfaTransitions(
-    GrammerType type, out HashSet<string> nfaFinals)
-{
-    var nfaTrans = new Dictionary<(string, char), HashSet<string>>();
-    nfaFinals = new HashSet<string>();
-    const string finalState = "F";
-
-    foreach (var nt in _grammer.Nonterminals)
-    {
-        if (!_grammer.Productions.ContainsKey(nt)) continue;
-
-        foreach (var prod in _grammer.Productions[nt])
-        {
-            if (prod == "ε" || prod == "λ")
-            {
-                nfaFinals.Add(nt);
-                continue;
-            }
-
-            if (type == GrammerType.LeftRegular)
-            {
-                char firstChar = prod[0];
-
-                if (_grammer.Isnonterminal(firstChar.ToString()))
+                foreach (var prod in _grammer.Productions[nt])
                 {
-                    string targetNT = firstChar.ToString();
-                    string w = prod.Substring(1);
-                    string reversed = new string(w.Reverse().ToArray());
+                    if (prod == "ε" || prod == "λ") continue;
 
-                    if (reversed.Length == 0) continue;
+                    string destination;
+                    char triggerChar;
 
-                    string cur = nt;
-                    for (int i = 0; i < reversed.Length; i++)
+                    if (type == GrammerType.LeftRegular)
                     {
-                        string next = (i == reversed.Length - 1)
-                            ? targetNT
-                            : $"q_{nt}_{targetNT}_{i}";
+                        // در چپ خطی A -> Bw شکل هست
+                        // آخرین کاراکتر ترمینال تریگره
+                        char lastChar = prod[prod.Length - 1];
+                        if (!_grammer.Isterminal(lastChar)) continue;
 
-                        var key = (cur, reversed[i]);
-                        if (!nfaTrans.ContainsKey(key))
-                            nfaTrans[key] = new HashSet<string>();
-                        nfaTrans[key].Add(next);
-                        cur = next;
+                        triggerChar = lastChar;
+                        destination = prod.Length == 1
+                            ? "F"
+                            : prod[0].ToString();
                     }
-                }
-                else
-                {
-                    nfaFinals.Add(finalState);
-                    string cur = nt;
-                    string reversedProd = new string(prod.Reverse().ToArray());
-                    for (int i = 0; i < reversedProd.Length; i++)
+                    else
                     {
-                        string next = (i == reversedProd.Length - 1)
-                            ? finalState
-                            : $"q_{nt}_t_{i}";
+                        // در راست خطی A -> wB شکل هست
+                        // اولین کاراکتر ترمینال تریگره
+                        char firstChar = prod[0];
+                        if (!_grammer.Isterminal(firstChar)) continue;
 
-                        var key = (cur, reversedProd[i]);
-                        if (!nfaTrans.ContainsKey(key))
-                            nfaTrans[key] = new HashSet<string>();
-                        nfaTrans[key].Add(next);
-                        cur = next;
+                        triggerChar = firstChar;
+                        destination = prod.Length == 1
+                            ? "F"
+                            : prod[prod.Length - 1].ToString();
                     }
+
+                    var key = (nt, triggerChar);
+                    if (seen.ContainsKey(key) && seen[key] != destination)
+                        return true;
+
+                    seen[key] = destination;
                 }
             }
-            else
+            return false;
+        }
+
+        private Dictionary<(string, char), HashSet<string>> BuildNfaTransitions(
+            GrammerType type, out HashSet<string> nfaFinals)
+        {
+            var nfaTrans = new Dictionary<(string, char), HashSet<string>>();
+            nfaFinals = new HashSet<string>();
+            const string finalState = "F";
+
+            foreach (var nt in _grammer.Nonterminals)
             {
-                char lastChar = prod[prod.Length - 1];
+                if (!_grammer.Productions.ContainsKey(nt)) continue;
 
-                if (_grammer.Isterminal(lastChar))
+                foreach (var prod in _grammer.Productions[nt])
                 {
-                    nfaFinals.Add(finalState);
-                    string cur = nt;
-                    for (int i = 0; i < prod.Length; i++)
+                    if (prod == "ε" || prod == "λ")
                     {
-                        string next = (i == prod.Length - 1)
-                            ? finalState
-                            : $"q_{nt}_r_{i}";
+                        nfaFinals.Add(nt);
+                        continue;
+                    }
 
-                        var key = (cur, prod[i]);
-                        if (!nfaTrans.ContainsKey(key))
-                            nfaTrans[key] = new HashSet<string>();
-                        nfaTrans[key].Add(next);
-                        cur = next;
+                    if (type == GrammerType.LeftRegular)
+                    {
+                        char firstChar = prod[0];
+
+                        if (_grammer.Isnonterminal(firstChar.ToString()))
+                        {
+                            string targetNT = firstChar.ToString();
+                            string w = prod.Substring(1);
+                            string reversed = new string(w.Reverse().ToArray());
+
+                            if (reversed.Length == 0) continue;
+
+                            string cur = nt;
+                            for (int i = 0; i < reversed.Length; i++)
+                            {
+                                string next = (i == reversed.Length - 1)
+                                    ? targetNT
+                                    : $"q_{nt}_{targetNT}_{i}";
+
+                                var key = (cur, reversed[i]);
+                                if (!nfaTrans.ContainsKey(key))
+                                    nfaTrans[key] = new HashSet<string>();
+                                nfaTrans[key].Add(next);
+                                cur = next;
+                            }
+                        }
+                        else
+                        {
+                            nfaFinals.Add(finalState);
+                            string cur = nt;
+                            string reversedProd = new string(prod.Reverse().ToArray());
+                            for (int i = 0; i < reversedProd.Length; i++)
+                            {
+                                string next = (i == reversedProd.Length - 1)
+                                    ? finalState
+                                    : $"q_{nt}_t_{i}";
+
+                                var key = (cur, reversedProd[i]);
+                                if (!nfaTrans.ContainsKey(key))
+                                    nfaTrans[key] = new HashSet<string>();
+                                nfaTrans[key].Add(next);
+                                cur = next;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        char lastChar = prod[prod.Length - 1];
+
+                        if (_grammer.Isterminal(lastChar))
+                        {
+                            nfaFinals.Add(finalState);
+                            string cur = nt;
+                            for (int i = 0; i < prod.Length; i++)
+                            {
+                                string next = (i == prod.Length - 1)
+                                    ? finalState
+                                    : $"q_{nt}_r_{i}";
+
+                                var key = (cur, prod[i]);
+                                if (!nfaTrans.ContainsKey(key))
+                                    nfaTrans[key] = new HashSet<string>();
+                                nfaTrans[key].Add(next);
+                                cur = next;
+                            }
+                        }
+                        else if (_grammer.Isnonterminal(lastChar.ToString()))
+                        {
+                            string cur = nt;
+                            for (int i = 0; i < prod.Length - 1; i++)
+                            {
+                                string next = (i == prod.Length - 2)
+                                    ? lastChar.ToString()
+                                    : $"q_{nt}_r_{i}";
+
+                                var key = (cur, prod[i]);
+                                if (!nfaTrans.ContainsKey(key))
+                                    nfaTrans[key] = new HashSet<string>();
+                                nfaTrans[key].Add(next);
+                                cur = next;
+                            }
+                        }
                     }
                 }
-                else if (_grammer.Isnonterminal(lastChar.ToString()))
-                {
-                    string cur = nt;
-                    for (int i = 0; i < prod.Length - 1; i++)
-                    {
-                        string next = (i == prod.Length - 2)
-                            ? lastChar.ToString()
-                            : $"q_{nt}_r_{i}";
+            }
+            return nfaTrans;
+        }
 
-                        var key = (cur, prod[i]);
-                        if (!nfaTrans.ContainsKey(key))
-                            nfaTrans[key] = new HashSet<string>();
-                        nfaTrans[key].Add(next);
-                        cur = next;
+        private Dfa SubsetConstruction(
+            string nfaStart,
+            Dictionary<(string, char), HashSet<string>> nfaTrans,
+            HashSet<string> nfaFinals)
+        {
+            var dfa = new Dfa();
+            const string deadState = "D";
+
+            var startSet = new HashSet<string> { nfaStart };
+            string startName = SetName(startSet);
+            dfa.StartState = startName;
+
+            var worklist = new Queue<HashSet<string>>();
+            var visited = new Dictionary<string, HashSet<string>>();
+
+            worklist.Enqueue(startSet);
+            visited[startName] = startSet;
+            dfa.Allstates.Add(startName);
+
+            if (startSet.Any(s => nfaFinals.Contains(s)))
+                dfa.Finalstates.Add(startName);
+
+            while (worklist.Count > 0)
+            {
+                var current = worklist.Dequeue();
+                string currentName = SetName(current);
+
+                foreach (char sym in _grammer.Terminals)
+                {
+                    var nextSet = new HashSet<string>();
+                    foreach (var state in current)
+                    {
+                        var key = (state, sym);
+                        if (nfaTrans.ContainsKey(key))
+                            foreach (var s in nfaTrans[key])
+                                nextSet.Add(s);
+                    }
+
+                    string nextName = nextSet.Count == 0 ? deadState : SetName(nextSet);
+
+                    dfa.Transitions.Add(new DfaTransition
+                    {
+                        FromState = currentName,
+                        Symbol = sym,
+                        ToState = nextName
+                    });
+
+                    if (nextSet.Count == 0)
+                    {
+                        dfa.Allstates.Add(deadState);
+                        continue;
+                    }
+
+                    if (!visited.ContainsKey(nextName))
+                    {
+                        visited[nextName] = nextSet;
+                        dfa.Allstates.Add(nextName);
+                        worklist.Enqueue(nextSet);
+
+                        if (nextSet.Any(s => nfaFinals.Contains(s)))
+                            dfa.Finalstates.Add(nextName);
                     }
                 }
             }
-        }
-    }
-    return nfaTrans;
-}
 
-private Dfa SubsetConstruction(
-    string nfaStart,
-    Dictionary<(string, char), HashSet<string>> nfaTrans,
-    HashSet<string> nfaFinals)
-{
-    var dfa = new Dfa();
-    const string deadState = "D";
-
-    var startSet = new HashSet<string> { nfaStart };
-    string startName = SetName(startSet);
-    dfa.StartState = startName;
-
-    var worklist = new Queue<HashSet<string>>();
-    var visited = new Dictionary<string, HashSet<string>>();
-
-    worklist.Enqueue(startSet);
-    visited[startName] = startSet;
-    dfa.Allstates.Add(startName);
-
-    if (startSet.Any(s => nfaFinals.Contains(s)))
-        dfa.Finalstates.Add(startName);
-
-    while (worklist.Count > 0)
-    {
-        var current = worklist.Dequeue();
-        string currentName = SetName(current);
-
-        foreach (char sym in _grammer.Terminals)
-        {
-            var nextSet = new HashSet<string>();
-            foreach (var state in current)
+            if (dfa.Allstates.Contains(deadState))
             {
-                var key = (state, sym);
-                if (nfaTrans.ContainsKey(key))
-                    foreach (var s in nfaTrans[key])
-                        nextSet.Add(s);
-            }
-
-            string nextName = nextSet.Count == 0 ? deadState : SetName(nextSet);
-
-            dfa.Transitions.Add(new DfaTransition
-            {
-                FromState = currentName,
-                Symbol = sym,
-                ToState = nextName
-            });
-
-            if (nextSet.Count == 0)
-            {
-                dfa.Allstates.Add(deadState);
-                continue;
-            }
-
-            if (!visited.ContainsKey(nextName))
-            {
-                visited[nextName] = nextSet;
-                dfa.Allstates.Add(nextName);
-                worklist.Enqueue(nextSet);
-
-                if (nextSet.Any(s => nfaFinals.Contains(s)))
-                    dfa.Finalstates.Add(nextName);
-            }
-        }
-    }
-
-    if (dfa.Allstates.Contains(deadState))
-    {
-        foreach (char sym in _grammer.Terminals)
-        {
-            bool has = dfa.Transitions.Any(
-                t => t.FromState == deadState && t.Symbol == sym);
-            if (!has)
-                dfa.Transitions.Add(new DfaTransition
+                foreach (char sym in _grammer.Terminals)
                 {
-                    FromState = deadState,
-                    Symbol = sym,
-                    ToState = deadState
-                });
+                    bool has = dfa.Transitions.Any(
+                        t => t.FromState == deadState && t.Symbol == sym);
+                    if (!has)
+                        dfa.Transitions.Add(new DfaTransition
+                        {
+                            FromState = deadState,
+                            Symbol = sym,
+                            ToState = deadState
+                        });
+                }
+            }
+
+            return dfa;
         }
-    }
 
-    return dfa;
-}
-
-private string SetName(HashSet<string> set)
-{
-    return "{" + string.Join(",", set.OrderBy(s => s)) + "}";
-}
-       public Dfa ConvertToDFA()
+        private string SetName(HashSet<string> set)
+        {
+            return "{" + string.Join(",", set.OrderBy(s => s)) + "}";
+        }
+        public Dfa ConvertToDFA()
         {
             var type = DetermineType();
             return (type == GrammerType.LeftRegular)
@@ -523,11 +523,11 @@ private string SetName(HashSet<string> set)
         }
         private Dfa ConvertRightLinearToDFA()
         {
-                if (IsNfaLike())
-    {
-        var nfaTrans = BuildNfaTransitions(GrammerType.RightRegular, out var nfaFinals);
-        return SubsetConstruction(_grammer.Startsymbol, nfaTrans, nfaFinals);
-    }
+            if (IsNfaLike())
+            {
+                var nfaTrans = BuildNfaTransitions(GrammerType.RightRegular, out var nfaFinals);
+                return SubsetConstruction(_grammer.Startsymbol, nfaTrans, nfaFinals);
+            }
             var dfa = new Dfa();
             dfa.StartState = _grammer.Startsymbol;
 
@@ -535,7 +535,7 @@ private string SetName(HashSet<string> set)
                 dfa.Allstates.Add(nt);
 
             const string finalState = "F";
-            const string deadState  = "D";
+            const string deadState = "D";
             dfa.Allstates.Add(finalState);
             dfa.Allstates.Add(deadState);
 
@@ -607,11 +607,11 @@ private string SetName(HashSet<string> set)
         }
         private Dfa ConvertLeftLinearToDFA()
         {
-              if (IsNfaLike())
-    {
-        var nfaTrans = BuildNfaTransitions(GrammerType.LeftRegular, out var nfaFinals);
-        return SubsetConstruction(_grammer.Startsymbol, nfaTrans, nfaFinals);
-    }
+            if (IsNfaLike())
+            {
+                var nfaTrans = BuildNfaTransitions(GrammerType.LeftRegular, out var nfaFinals);
+                return SubsetConstruction(_grammer.Startsymbol, nfaTrans, nfaFinals);
+            }
             var dfa = new Dfa();
 
             foreach (var nt in _grammer.Nonterminals)
@@ -637,8 +637,8 @@ private string SetName(HashSet<string> set)
 
                     if (_grammer.Isnonterminal(firstChar.ToString()))
                     {
-                        string targetNT = firstChar.ToString(); 
-                      string terminals = new string(prod.Substring(1).Reverse().ToArray());   // w
+                        string targetNT = firstChar.ToString();
+                        string terminals = new string(prod.Substring(1).Reverse().ToArray());   // w
 
                         if (terminals.Length == 0) continue;
 
@@ -721,8 +721,8 @@ private string SetName(HashSet<string> set)
                         dfa.Transitions.Add(new DfaTransition
                         {
                             FromState = st,
-                            Symbol    = sym,
-                            ToState   = dead
+                            Symbol = sym,
+                            ToState = dead
                         });
                     }
                 }
@@ -739,8 +739,8 @@ private string SetName(HashSet<string> set)
                     dfa.Transitions.Add(new DfaTransition
                     {
                         FromState = dead,
-                        Symbol    = sym,
-                        ToState   = dead
+                        Symbol = sym,
+                        ToState = dead
                     });
                 }
             }
@@ -753,8 +753,8 @@ private string SetName(HashSet<string> set)
             dfa.Transitions.Add(new DfaTransition
             {
                 FromState = from,
-                Symbol    = sym,
-                ToState   = to
+                Symbol = sym,
+                ToState = to
             });
         }
     }
