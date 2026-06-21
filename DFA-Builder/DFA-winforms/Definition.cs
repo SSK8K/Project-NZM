@@ -205,7 +205,7 @@ namespace ProjectNZM
 
                     if (prod.Length >= 1)
                     {
-                        char lastChar = prod[prod.Length - 1];
+                        char lastChar = prod[prod.Length - 1]; 
 
                         if (_grammer.Isterminal(lastChar) && prod.Length == 1)
                         {
@@ -547,7 +547,7 @@ namespace ProjectNZM
                         continue;
                     }
 
-                    char lastChar = prod[prod.Length - 1];
+                    char lastChar = prod[prod.Length - 1]; // Key diff
 
                     if (_grammer.Isterminal(lastChar))
                     {
